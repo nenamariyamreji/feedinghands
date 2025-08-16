@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Donor Dashboard - Feeding-Hands</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <header class="main-header">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="https://img.icons8.com/plasticine/100/wheat.png" alt="Feeding-Hands Logo" class="logo-img">
+                Feeding-Hands
+            </a>
+            <nav class="main-nav">
+                <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Home</a>
+                <a href="donor-dashboard.html" class="nav-link active"><i class="fas fa-heart"></i> Food Donor</a>
+                <a href="ngo.html" class="nav-link"><i class="fas fa-hands-helping"></i> NGO</a>
+                <a href="farmer-dashboard.html" class="nav-link"><i class="fas fa-leaf"></i> Farmer</a>
+                <a href="#" id="logout-link" class="nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="dashboard-page">
+        <div class="container">
+            <div class="dashboard-header">
+                <div>
+                    <h1>Food Donor Dashboard</h1>
+                    <p>Welcome back, <span id="donor-name">User</span>!</p>
+                </div>
+                <a href="donation.html" class="btn btn-primary"><i class="fas fa-plus"></i> Add Food Donation</a>
+            </div>
+
+            <div class="dashboard-stats-grid">
+                <div class="dashboard-stat-card">
+                    <div class="stat-card-content">
+                        <p>Total Donations</p>
+                        <h3 id="total-donations">0</h3>
+                    </div>
+                    <div class="stat-card-icon green">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                </div>
+                <div class="dashboard-stat-card">
+                    <div class="stat-card-content">
+                        <p>Food Donated (Est.)</p>
+                        <h3 id="food-donated">0 kg</h3>
+                    </div>
+                    <div class="stat-card-icon orange">
+                        <i class="fas fa-weight-hanging"></i>
+                    </div>
+                </div>
+                <div class="dashboard-stat-card">
+                    <div class="stat-card-content">
+                        <p>Active Listings</p>
+                        <h3 id="active-listings">0</h3>
+                    </div>
+                    <div class="stat-card-icon blue">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+                <div class="dashboard-stat-card">
+                    <div class="stat-card-content">
+                        <p>Claimed</p>
+                        <h3 id="claimed-listings">0</h3>
+                    </div>
+                    <div class="stat-card-icon purple">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="donations-list-container">
+                <h2>Your Food Donations</h2>
+                <div id="donations-list">
+                    <p>Loading your donations...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user'));
+
+            if (!token || !user || user.role !== 'donor') {
+                alert('You must be logged in as a donor to view this page.');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            document.getElementById('donor-name').textContent = user.name;
+            fetchDashboardData();
+
+            document.getElementById('logout-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'index.html';
+            });
+        });
+
+        async function fetchDashboardData() {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch('http://localhost:5000/api/donor/dashboard', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Failed to fetch dashboard data.');
+
+                const data = await response.json();
+                
+                document.getElementById('total-donations').textContent = data.stats.totalDonations;
+                document.getElementById('food-donated').textContent = `${data.stats.totalQuantity} kg`;
+                document.getElementById('active-listings').textContent = data.stats.activeListings;
+                document.getElementById('claimed-listings').textContent = data.stats.claimedListings;
+
+                const listElement = document.getElementById('donations-list');
+                listElement.innerHTML = '';
+                if (data.donations.length === 0) {
+                    listElement.innerHTML = '<p>You have not made any donations yet. Click "Add Food Donation" to start!</p>';
+                    return;
+                }
+
+                data.donations.forEach(donation => {
+                    const card = document.createElement('div');
+                    card.className = 'donation-list-item';
+                    
+                    const statusTag = donation.status === 'available' 
+                        ? `<span class="tag available">available</span>`
+                        : `<span class="tag claimed">claimed by ${donation.claimedBy ? donation.claimedBy.name : 'an NGO'}</span>`;
+
+                    card.innerHTML = `
+                        <h4>${donation.foodDescription}</h4>
+                        <div class="donation-meta">
+                            <span><i class="fas fa-map-marker-alt"></i> ${donation.city}</span>
+                            <span><i class="fas fa-phone"></i> ${donation.phone}</span>
+                            <span><i class="fas fa-box"></i> Quantity: ${donation.quantity}</span>
+                        </div>
+                        <div class="tags">
+                            <span class="tag category">${donation.foodType}</span>
+                            ${statusTag}
+                        </div>
+                    `;
+                    listElement.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error(error);
+                alert(error.message);
+            }
+        }
+    </script>
+</body>
+</html>

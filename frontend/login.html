@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Feeding-Hands</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="form-page-container">
+        <div class="form-container">
+            <h2 class="form-title">Welcome Back!</h2>
+            <p class="form-subtitle">Please select your role and log in to continue.</p>
+
+            <div class="role-selector">
+                <button class="role-tab active" data-role="donor">Donor</button>
+                <button class="role-tab" data-role="ngo">NGO</button>
+                <button class="role-tab" data-role="farmer">Farmer</button>
+            </div>
+
+            <form id="loginForm">
+                <input type="hidden" id="role" name="role" value="donor">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" class="submit-btn" id="submitBtn">Login</button>
+            </form>
+            <p class="form-link">Don't have an account? <a href="register.html">Register here</a></p>
+        </div>
+    </div>
+
+    <script>
+        const roleTabs = document.querySelectorAll('.role-tab');
+        const roleInput = document.getElementById('role');
+
+        roleTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                roleTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                roleInput.value = tab.dataset.role;
+            });
+        });
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Logging in...';
+
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Login failed');
+
+                localStorage.setItem('token', result.token);
+                localStorage.setItem('user', JSON.stringify(result.user));
+
+                // Redirect based on role
+                if (result.user.role === 'donor') {
+                    window.location.href = 'donor-dashboard.html';
+                } else if (result.user.role === 'ngo') {
+                    window.location.href = 'ngo.html';
+                } else if (result.user.role === 'farmer') {
+                    window.location.href = 'farmer-dashboard.html';
+                }
+
+            } catch (error) {
+                alert('Error: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Login';
+            }
+        });
+    </script>
+</body>
+</html>

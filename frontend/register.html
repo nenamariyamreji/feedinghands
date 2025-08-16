@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Feeding-Hands</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="form-page-container">
+        <div class="form-container">
+            <h2 class="form-title">Create an Account</h2>
+            <p class="form-subtitle">Join our community as a Donor, NGO, or Farmer.</p>
+
+            <div class="role-selector">
+                <button class="role-tab active" data-role="donor">Donor</button>
+                <button class="role-tab" data-role="ngo">NGO</button>
+                <button class="role-tab" data-role="farmer">Farmer</button>
+            </div>
+
+            <form id="registerForm">
+                <input type="hidden" id="role" name="role" value="donor">
+                <div class="form-group">
+                    <label for="name">Full Name / Organization Name</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" name="phone" required>
+                </div>
+                <div class="form-group" id="city-field" style="display: none;">
+                    <label for="city">City</label>
+                    <input type="text" id="city" name="city">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required minlength="6">
+                </div>
+                <button type="submit" class="submit-btn" id="submitBtn">Create Account</button>
+            </form>
+            <p class="form-link">Already have an account? <a href="login.html">Login here</a></p>
+        </div>
+    </div>
+
+    <script>
+        const roleTabs = document.querySelectorAll('.role-tab');
+        const roleInput = document.getElementById('role');
+        const cityField = document.getElementById('city-field');
+        const cityInput = document.getElementById('city');
+
+        // Function to show/hide the city field based on the selected role
+        function toggleCityField(role) {
+            if (role === 'ngo' || role === 'farmer') {
+                cityField.style.display = 'block';
+                cityInput.required = true;
+            } else {
+                cityField.style.display = 'none';
+                cityInput.required = false;
+            }
+        }
+
+        roleTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                roleTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                const selectedRole = tab.dataset.role;
+                roleInput.value = selectedRole;
+                toggleCityField(selectedRole);
+            });
+        });
+
+        document.getElementById('registerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating Account...';
+
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('http://localhost:5000/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Registration failed');
+
+                alert('Registration successful! Please log in.');
+                window.location.href = 'login.html';
+
+            } catch (error) {
+                alert('Error: ' + error.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Create Account';
+            }
+        });
+    </script>
+</body>
+</html>

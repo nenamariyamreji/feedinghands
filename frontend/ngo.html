@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NGO Dashboard - Feeding-Hands</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+    <header class="main-header">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="https://img.icons8.com/plasticine/100/wheat.png" alt="Feeding-Hands Logo" class="logo-img">
+                Feeding-Hands
+            </a>
+            <nav class="main-nav">
+                <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Home</a>
+                <a href="donor-dashboard.html" class="nav-link"><i class="fas fa-heart"></i> Food Donor</a>
+                <a href="ngo.html" class="nav-link active"><i class="fas fa-hands-helping"></i> NGO</a>
+                <a href="farmer-dashboard.html" class="nav-link"><i class="fas fa-leaf"></i> Farmer</a>
+                <a href="#" id="logout-link" class="nav-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="dashboard-page">
+        <div class="container">
+            <div class="dashboard-header">
+                <div>
+                    <h1>NGO Dashboard</h1>
+                    <p>Welcome, <span id="ngo-name">NGO</span>! <span class="serving-info">• Serving 5 areas within 15km radius</span></p>
+                </div>
+            </div>
+
+            <div class="priority-notification">
+                <i class="fas fa-bullhorn"></i>
+                <div>
+                    <strong>High Priority Matches Found!</strong>
+                    <p>3 food donations in your immediate service area. Perfect match for quick pickup!</p>
+                </div>
+            </div>
+
+            <div class="dashboard-stats-grid">
+                <div class="dashboard-stat-card">
+                    <div class="stat-card-content">
+                        <p>Total Claimed</p>
+                        <h3 id="total-claimed">0</h3>
+                    </div>
+                    <div class="stat-card-icon blue">
+                        <i class="fas fa-box"></i>
+                    </div>
+                </div>
+                <div class="dashboard-stat-card">
+                    <div class="stat-card-content">
+                        <p>People Served (Est.)</p>
+                        <h3 id="people-served">0</h3>
+                    </div>
+                    <div class="stat-card-icon green">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="dashboard-stat-card">
+                    <div class="stat-card-content">
+                        <p>Available Now</p>
+                        <h3 id="available-now">0</h3>
+                    </div>
+                    <div class="stat-card-icon orange">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                </div>
+                <div class="dashboard-stat-card">
+                    <div class="stat-card-content">
+                        <p>Areas Served</p>
+                        <h3 id="areas-served">4</h3>
+                    </div>
+                    <div class="stat-card-icon purple">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="donations-list-container">
+                <div class="list-header">
+                    <h2>Smart Matched Food Donations</h2>
+                    <!-- Filters can be added here later -->
+                </div>
+                <div id="donations-list">
+                    <p>Loading available donations...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user'));
+
+            if (!token || !user || user.role !== 'ngo') {
+                alert('You must be logged in as an NGO to view this page.');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            document.getElementById('ngo-name').textContent = user.name;
+            fetchNgoDashboardData();
+
+            document.getElementById('logout-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = 'index.html';
+            });
+        });
+
+        async function fetchNgoDashboardData() {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch('http://localhost:5000/api/ngo/dashboard', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Failed to fetch dashboard data.');
+
+                const data = await response.json();
+                
+                document.getElementById('total-claimed').textContent = data.stats.totalClaimed;
+                document.getElementById('people-served').textContent = data.stats.peopleServed.toLocaleString();
+                document.getElementById('available-now').textContent = data.stats.availableNow;
+
+                const listElement = document.getElementById('donations-list');
+                listElement.innerHTML = '';
+                if (data.availableDonations.length === 0) {
+                    listElement.innerHTML = '<p>No available donations at the moment. Check back soon!</p>';
+                    return;
+                }
+
+                data.availableDonations.forEach(donation => {
+                    const card = document.createElement('div');
+                    card.className = 'donation-list-item';
+                    card.innerHTML = `
+                        <h4>${donation.foodDescription}</h4>
+                        <div class="donation-meta">
+                            <span><i class="fas fa-map-marker-alt"></i> ${donation.city}</span>
+                            <span><i class="fas fa-clock"></i> Expires soon</span>
+                            <span><i class="fas fa-phone"></i> ${donation.phone}</span>
+                        </div>
+                        <p><strong>Quantity:</strong> ${donation.quantity}</p>
+                        <div class="tags-and-claim">
+                            <div class="tags">
+                                <span class="tag category">${donation.foodType}</span>
+                                <span class="tag available">available</span>
+                            </div>
+                            <button class="btn btn-claim" onclick="claimDonation(this, '${donation._id}')">Claim</button>
+                        </div>
+                    `;
+                    listElement.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error(error);
+                alert(error.message);
+            }
+        }
+
+        async function claimDonation(button, donationId) {
+            // This function should be the same as in your previous ngo.html
+            const token = localStorage.getItem('token');
+            if (!confirm('Are you sure you want to claim this donation?')) return;
+            try {
+                const response = await fetch(`http://localhost:5000/api/donations/${donationId}/claim`, {
+                    method: 'PATCH',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.message || 'Failed to claim donation');
+                }
+                button.textContent = 'Claimed!';
+                button.disabled = true;
+                button.style.backgroundColor = 'var(--light-text)';
+                alert('Donation claimed successfully!');
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

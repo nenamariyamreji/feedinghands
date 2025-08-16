@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feeding-Hands - Bridging Food Waste and Hunger</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Icon library for nav links -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <header class="main-header">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <img src="https://img.icons8.com/plasticine/100/wheat.png" alt="Feeding-Hands Logo" class="logo-img">
+                Feeding-Hands
+            </a>
+            <nav class="main-nav">
+                <a href="index.html" class="nav-link active"><i class="fas fa-home"></i> Home</a>
+                <a href="donation.html" class="nav-link"><i class="fas fa-heart"></i> Food Donor</a>
+                <a href="ngo.html" class="nav-link"><i class="fas fa-hands-helping"></i> NGO</a>
+                <a href="farmer-dashboard.html" class="nav-link"><i class="fas fa-leaf"></i> Farmer</a>
+                <a href="login.html" class="nav-link" id="login-logout-link"><i class="fas fa-sign-in-alt"></i> Login</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <main class="hero-section">
+        <div class="container">
+            <div class="hero-content">
+                <span class="hero-tag">Connecting Food Donors • NGOs • Farmers</span>
+                <h1>Bridging the Gap Between Food Waste and Hunger</h1>
+                <p class="hero-subtitle">Feeding-Hands solves urban food waste while providing price transparency to farmers. Join our mission to create a sustainable food ecosystem across India.</p>
+                <div class="hero-buttons">
+                    <a href="donation.html" class="btn btn-primary"><i class="fas fa-heart"></i> Donate Food</a>
+                    <a href="ngo.html" class="btn btn-secondary"><i class="fas fa-search"></i> Find Food Donations</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-icon"><i class="fas fa-heart"></i></div>
+                    <div class="stat-number" id="meals-donated">0+</div>
+                    <div class="stat-label">Meals Donated</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                    <div class="stat-number" id="ngo-partners">0+</div>
+                    <div class="stat-label">NGO Partners</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="stat-number" id="farmers-connected">0+</div>
+                    <div class="stat-label">Farmers Connected</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-icon"><i class="fas fa-map-marker-alt"></i></div>
+                    <div class="stat-number" id="cities-served">0+</div>
+                    <div class="stat-label">Cities Served</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-it-works-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>How Feeding-Hands Works</h2>
+            </div>
+            <div class="how-it-works-grid">
+                <div class="work-card food-waste">
+                    <h4>Food Waste Reduction</h4>
+                    <p>Connect surplus food from restaurants and households to NGOs serving the needy.</p>
+                </div>
+                <div class="work-card ngo-network">
+                    <h4>NGO Network</h4>
+                    <p>Verified NGOs can browse and claim food donations in real-time.</p>
+                </div>
+                <div class="work-card price-transparency">
+                    <h4>Price Transparency</h4>
+                    <p>Real-time agricultural market prices to help farmers make informed decisions.</p>
+                </div>
+                <div class="work-card location-matching">
+                    <h4>Location Matching</h4>
+                    <p>Smart matching based on proximity for efficient food distribution.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>Ready to Make a Difference?</h2>
+            <p>Join thousands of donors, NGOs, and farmers creating positive change.</p>
+            <div class="cta-buttons">
+                <a href="login.html" class="btn btn-tertiary"><i class="fas fa-chart-bar"></i> Check Market Prices</a>
+                <a href="donation.html" class="btn btn-quaternary"><i class="fas fa-plus-circle"></i> Start Donating</a>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            updateLoginLink();
+            fetchStats();
+        });
+
+        function updateLoginLink() {
+            const loginLogoutLink = document.getElementById('login-logout-link');
+            const token = localStorage.getItem('token');
+            if (token) {
+                loginLogoutLink.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
+                loginLogoutLink.href = '#'; // Prevent navigation
+                loginLogoutLink.onclick = (e) => {
+                    e.preventDefault();
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.reload(); // Refresh the page to update state
+                };
+            } else {
+                loginLogoutLink.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+                loginLogoutLink.href = 'login.html';
+            }
+        }
+
+        function animateCount(element, endValue) {
+            if (endValue === 0) {
+                element.textContent = '0+';
+                return;
+            }
+            let startValue = 0;
+            const duration = 1500;
+            const stepTime = Math.max(1, Math.floor(duration / endValue));
+            
+            const timer = setInterval(() => {
+                startValue += 1;
+                element.textContent = `${startValue.toLocaleString()}+`;
+                if (startValue >= endValue) {
+                    element.textContent = `${endValue.toLocaleString()}+`;
+                    clearInterval(timer);
+                }
+            }, stepTime);
+        }
+
+        async function fetchStats() {
+            try {
+                const response = await fetch('http://localhost:5000/api/stats');
+                if (!response.ok) throw new Error('Could not fetch stats');
+                
+                const stats = await response.json();
+
+                animateCount(document.getElementById('meals-donated'), stats.mealsDonated);
+                animateCount(document.getElementById('ngo-partners'), stats.ngoPartners);
+                animateCount(document.getElementById('farmers-connected'), stats.farmersConnected); // <-- THIS LINE IS NOW CORRECT
+                animateCount(document.getElementById('cities-served'), stats.citiesServed);
+
+            } catch (error) {
+                console.error("Failed to load stats:", error);
+                // Set to 0 if API fails
+                document.getElementById('meals-donated').textContent = '0+';
+                document.getElementById('ngo-partners').textContent = '0+';
+                document.getElementById('farmers-connected').textContent = '0+';
+                document.getElementById('cities-served').textContent = '0+';
+            }
+        }
+    </script>
+</body>
+</html>
